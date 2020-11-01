@@ -48,8 +48,18 @@ class data_process:
                       'Consprice': [16, Consprice_split], \
                       'Conscpnf': [17, Consconf_split], \
                       'Euribor3m': [18, Euribor3m_split], \
-                      'Nremployed': [19, Nremployed_split]}
+                      'Nremployed': [19, Nremployed_split]
+        }
         self.split_del = 10
+        
+        self.unknown_label = {'Job': [1, ['admin.', 'blue-collar', 'entrepreneur', 'housemaid', 'management', 'retired', 'self-employed', 'services', 'student', 'technician', 'unemployed']], \
+                        'Marital': [2, ['divorced', 'married', 'single']], \
+                        'Education': [3, ['basic.4y', 'basic.6y', 'basic.9y', 'high.school', 'illiterate', 'professional.course', 'university.degree']], \
+                        'Default': [4, ['no', 'yes']], \
+                        'Housing': [5, ['no', 'yes']], \
+                        'Loan': [6, ['no', 'yes']]
+        }
+        self.unknown_string = 'unknown'
 
         self.bank_list = bank_list
         self.embedding()
