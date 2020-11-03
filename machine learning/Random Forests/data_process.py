@@ -25,6 +25,7 @@
 
 
 import pandas as pd
+import random
 
 class data_process:
     def __init__(self,\
@@ -60,9 +61,17 @@ class data_process:
                         'Loan': [6, ['no', 'yes']]
         }
         self.unknown_string = 'unknown'
+        self.missing_count = {'Job': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                            'Marital': [0, 0, 0], \
+                            'Education': [0, 0, 0, 0, 0, 0, 0], \
+                            'Default': [0, 0], \
+                            'Housing': [0, 0], \
+                            'Loan': [0, 0]}
 
         self.bank_list = bank_list
         self.embedding()
+        self.missing_process()
+        self.del_Duration()
         
     def embedding(self):
         for i in range(len(self.bank_list)):
@@ -75,7 +84,42 @@ class data_process:
                     else:
                         self.bank_list[i][self.split[key][0]] = j + 1
                         break
+
+    #missing 1st to 6th data process 
+    def missing_process(self):
+        for i in range(len(self.bank_list)):
+            for key in self.unknown_label:
+                for j in range(len(self.missing_count[key])):
+                    if self.bank_list[i][self.unknown_label[key][0]] == self.unknown_label[key][1][j]:
+                        self.missing_count[key][j] = self.missing_count[key][j] + 1
+        for i in range(len(self.bank_list)):
+            for key in self.missing_count:
+                missing_sum = sum(self.missing_count[key])
+                for j in range(len(self.missing_count[key])):
+                    self.missing_count[key][j] = self.missing_count[key][j] /  missing_sum
+        for key in self.missing_count:
+            for i in range(len(self.missing_count[key])):
+                if i >= 1:
+                    self.missing_count[key][i] = self.missing_count[key][i] + self.missing_count[key][i-1]
+        for i in range(len(self.bank_list)):
+            for key in self.unknown_label:
+                if self.bank_list[i][self.unknown_label[key][0]] == self.unknown_string:
+                    randint_number = random.randint(0, 1)
+                    for j in range(len(self.missing_count[key])):
+                        if randint_number <= self.missing_count[key][j]:
+                            self.bank_list[i][self.unknown_label[key][0]] = self.unknown_label[key][1][j]
+
+
+    def get_missing_count(self):
+        return self.missing_count
+
+             
+    def del_Duration(self):
+        for i in range(len(self.bank_list)):
             del(self.bank_list[i][self.split_del])
+
+
+
 
     def get_bank_list(self):
         return self.bank_list
