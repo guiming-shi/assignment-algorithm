@@ -53,20 +53,26 @@ class data_process:
         }
         self.split_del = 10
         
-        self.unknown_label = {'Job': [1, ['admin.', 'blue-collar', 'entrepreneur', 'housemaid', 'management', 'retired', 'self-employed', 'services', 'student', 'technician', 'unemployed']], \
-                        'Marital': [2, ['divorced', 'married', 'single']], \
-                        'Education': [3, ['basic.4y', 'basic.6y', 'basic.9y', 'high.school', 'illiterate', 'professional.course', 'university.degree']], \
-                        'Default': [4, ['no', 'yes']], \
-                        'Housing': [5, ['no', 'yes']], \
-                        'Loan': [6, ['no', 'yes']]
+        self.unknown_label = {'Job': [1, ['admin.', 'blue-collar', 'entrepreneur', 'housemaid', 'management', 'retired', 'self-employed', 'services', 'student', 'technician', 'unemployed'], \
+                                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], \
+                        'Marital': [2, ['divorced', 'married', 'single'], \
+                                   [0, 0, 0]], \
+                        'Education': [3, ['basic.4y', 'basic.6y', 'basic.9y', 'high.school', 'illiterate', 'professional.course', 'university.degree'], \
+                                     [0, 0, 0, 0, 0, 0, 0]], \
+                        'Default': [4, ['no', 'yes'], \
+                                   [0, 0]], \
+                        'Housing': [5, ['no', 'yes'], \
+                                   [0, 0]], \
+                        'Loan': [6, ['no', 'yes'], \
+                                [0, 0]]
         }
         self.unknown_string = 'unknown'
-        self.missing_count = {'Job': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
-                            'Marital': [0, 0, 0], \
-                            'Education': [0, 0, 0, 0, 0, 0, 0], \
-                            'Default': [0, 0], \
-                            'Housing': [0, 0], \
-                            'Loan': [0, 0]}
+        # self.missing_count = {'Job': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+        #                     'Marital': [0, 0, 0], \
+        #                     'Education': [0, 0, 0, 0, 0, 0, 0], \
+        #                     'Default': [0, 0], \
+        #                     'Housing': [0, 0], \
+        #                     'Loan': [0, 0]}
 
         self.bank_list = bank_list
         self.embedding()
@@ -89,37 +95,32 @@ class data_process:
     def missing_process(self):
         for i in range(len(self.bank_list)):
             for key in self.unknown_label:
-                for j in range(len(self.missing_count[key])):
+                for j in range(len(self.unknown_label[key][1])):
                     if self.bank_list[i][self.unknown_label[key][0]] == self.unknown_label[key][1][j]:
-                        self.missing_count[key][j] = self.missing_count[key][j] + 1
+                        self.unknown_label[key][2][j] = self.unknown_label[key][2][j] + 1
         for i in range(len(self.bank_list)):
-            for key in self.missing_count:
-                missing_sum = sum(self.missing_count[key])
-                for j in range(len(self.missing_count[key])):
-                    self.missing_count[key][j] = self.missing_count[key][j] /  missing_sum
-        for key in self.missing_count:
-            for i in range(len(self.missing_count[key])):
-                if i >= 1:
-                    self.missing_count[key][i] = self.missing_count[key][i] + self.missing_count[key][i-1]
+            for key in self.unknown_label:
+                missing_sum = sum(self.unknown_label[key][2])
+                for j in range(len(self.unknown_label[key][2])):
+                    self.unknown_label[key][2][j] = self.unknown_label[key][2][j] /  missing_sum
+        for key in self.unknown_label:
+            for j in range(len(self.unknown_label[key][2])):
+                if j >= 1:
+                    self.unknown_label[key][2][j] = self.unknown_label[key][2][j] + self.unknown_label[key][2][j-1]
         for i in range(len(self.bank_list)):
             for key in self.unknown_label:
                 if self.bank_list[i][self.unknown_label[key][0]] == self.unknown_string:
                     randint_number = random.randint(0, 1)
-                    for j in range(len(self.missing_count[key])):
-                        if randint_number <= self.missing_count[key][j]:
+                    for j in range(len(self.unknown_label[key][2])):
+                        if randint_number <= self.unknown_label[key][2][j]:
                             self.bank_list[i][self.unknown_label[key][0]] = self.unknown_label[key][1][j]
 
-
-    def get_missing_count(self):
-        return self.missing_count
-
-             
+    def get_unknown_label(self):
+        return self.unknown_label
+           
     def del_Duration(self):
         for i in range(len(self.bank_list)):
             del(self.bank_list[i][self.split_del])
-
-
-
 
     def get_bank_list(self):
         return self.bank_list
