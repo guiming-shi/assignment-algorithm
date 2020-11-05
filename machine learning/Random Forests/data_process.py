@@ -22,13 +22,14 @@
 # 17.	Cons.conf.idx: consumer confidence index - monthly indicator (numeric) -47 -46 -42 -41 -36 +
 # 18.	Euribor3m: euribor 3 month rate - daily indicator (numeric) 1.5 4.8 +
 # 19.	Nr.employed: number of employees - quarterly indicator (numeric)  5099 5190  5200 +
+# 20.   yes/no
 
 
 import pandas as pd
 import random
 
 class data_process:
-    def __init__(self,\
+    def __init__(self, \
                  bank_list, \
                  Age_split=[29, 32, 35, 38, 41, 46, 52, 60], \
                  Campaign_split=[1, 2, 3, 10], \
@@ -40,7 +41,7 @@ class data_process:
                  Euribor3m_split=[1.5, 4.8], \
                  Nremployed_split=[5099, 5190, 5200]):
         super(data_process, self).__init__()
-        # self.split_number = [0,11,12,13,15,16,17,18,19]
+        #split number
         self.split = {'Age': [0, Age_split], \
                       'Campaign': [11, Campaign_split], \
                       'Pdays': [12, Pdays_split], \
@@ -51,33 +52,37 @@ class data_process:
                       'Euribor3m': [18, Euribor3m_split], \
                       'Nremployed': [19, Nremployed_split]
         }
+        #del the duration 
         self.split_del = 10
-        
+        #handle the unknown type
         self.unknown_label = {'Job': [1, ['admin.', 'blue-collar', 'entrepreneur', 'housemaid', 'management', 'retired', 'self-employed', 'services', 'student', 'technician', 'unemployed'], \
-                                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], \
+                                     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], \
                         'Marital': [2, ['divorced', 'married', 'single'], \
-                                   [0, 0, 0]], \
+                                   [0, 0, 0], [0, 0, 0]], \
                         'Education': [3, ['basic.4y', 'basic.6y', 'basic.9y', 'high.school', 'illiterate', 'professional.course', 'university.degree'], \
-                                     [0, 0, 0, 0, 0, 0, 0]], \
+                                     [0, 0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0, 0]], \
                         'Default': [4, ['no', 'yes'], \
-                                   [0, 0]], \
+                                   [0, 0], [0, 0]], \
                         'Housing': [5, ['no', 'yes'], \
-                                   [0, 0]], \
+                                   [0, 0], [0, 0]], \
                         'Loan': [6, ['no', 'yes'], \
-                                [0, 0]]
+                                [0, 0], [0, 0]]
         }
         self.unknown_string = 'unknown'
-        # self.missing_count = {'Job': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
-        #                     'Marital': [0, 0, 0], \
-        #                     'Education': [0, 0, 0, 0, 0, 0, 0], \
-        #                     'Default': [0, 0], \
-        #                     'Housing': [0, 0], \
-        #                     'Loan': [0, 0]}
-
+        # the number of yes and no label
+        self.number_yes = 0
+        self.number_no = 0
+        # the self.bank_list_buffer is the output
         self.bank_list = bank_list
+        self.bank_list_buffer = [None] * len(self.bank_list)
+        # handle the continuous variables, split from the list self.split, from 1 to N
         self.embedding()
+        # handle the unknown type, according to the probability of label of same output type 
         self.missing_process()
+        # del the duration feature
         self.del_Duration()
+        # sort the data according the output type
+        self.class_sort()
         
     def embedding(self):
         for i in range(len(self.bank_list)):
@@ -97,41 +102,99 @@ class data_process:
             for key in self.unknown_label:
                 for j in range(len(self.unknown_label[key][1])):
                     if self.bank_list[i][self.unknown_label[key][0]] == self.unknown_label[key][1][j]:
-                        self.unknown_label[key][2][j] = self.unknown_label[key][2][j] + 1
+                        if self.bank_list[i][20] == 'yes':
+                            self.unknown_label[key][2][j] = self.unknown_label[key][2][j] + 1
+                        elif self.bank_list[i][20] == 'no':
+                            self.unknown_label[key][3][j] = self.unknown_label[key][3][j] + 1
+
         for i in range(len(self.bank_list)):
             for key in self.unknown_label:
                 missing_sum = sum(self.unknown_label[key][2])
                 for j in range(len(self.unknown_label[key][2])):
                     self.unknown_label[key][2][j] = self.unknown_label[key][2][j] /  missing_sum
+                missing_sum = sum(self.unknown_label[key][3])
+                for j in range(len(self.unknown_label[key][3])):
+                    self.unknown_label[key][3][j] = self.unknown_label[key][3][j] /  missing_sum
+
         for key in self.unknown_label:
             for j in range(len(self.unknown_label[key][2])):
                 if j >= 1:
                     self.unknown_label[key][2][j] = self.unknown_label[key][2][j] + self.unknown_label[key][2][j-1]
+            for j in range(len(self.unknown_label[key][3])):
+                if j >= 1:
+                    self.unknown_label[key][3][j] = self.unknown_label[key][3][j] + self.unknown_label[key][3][j-1]
+            
         for i in range(len(self.bank_list)):
-            for key in self.unknown_label:
-                if self.bank_list[i][self.unknown_label[key][0]] == self.unknown_string:
-                    randint_number = random.randint(0, 1)
-                    for j in range(len(self.unknown_label[key][2])):
-                        if randint_number <= self.unknown_label[key][2][j]:
-                            self.bank_list[i][self.unknown_label[key][0]] = self.unknown_label[key][1][j]
+            if self.bank_list[i][20] == 'yes':
+                for key in self.unknown_label:
+                    if self.bank_list[i][self.unknown_label[key][0]] == self.unknown_string:
+                        randint_number = random.random()
+                        for j in range(len(self.unknown_label[key][2])):
+                            if randint_number <= self.unknown_label[key][2][j]:
+                                self.bank_list[i][self.unknown_label[key][0]] = self.unknown_label[key][1][j]
+            elif self.bank_list[i][20] == 'no':
+                for key in self.unknown_label:
+                    if self.bank_list[i][self.unknown_label[key][0]] == self.unknown_string:
+                        randint_number = random.random()
+                        for j in range(len(self.unknown_label[key][3])):
+                            if randint_number <= self.unknown_label[key][3][j]:
+                                self.bank_list[i][self.unknown_label[key][0]] = self.unknown_label[key][1][j]
 
-    def get_unknown_label(self):
-        return self.unknown_label
-           
     def del_Duration(self):
         for i in range(len(self.bank_list)):
             del(self.bank_list[i][self.split_del])
 
+#the index of yes/no from 20 to 19 is because the self.del_Duration
+    def class_sort(self):
+        j = 0
+        k = 1
+        for i in range(len(self.bank_list)):
+            if self.bank_list[i][19] == 'yes':
+                self.number_yes = self.number_yes + 1
+                self.bank_list_buffer[j] = self.bank_list[i]
+                j = j + 1
+            elif self.bank_list[i][19] == 'no':
+                self.number_no = self.number_no + 1
+                self.bank_list_buffer[len(self.bank_list_buffer) - k] = self.bank_list[i]
+                k = k + 1
+    
+    def select(self, select_number, feature_number):
+        index = random.sample(range(0, 18), feature_number)
+        index = sorted(index)
+        select_bank_data = [[] for i in range(select_number)]
+        select_bank_data_id = set()
+        for i in range(select_number):
+            select_split = self.number_yes / (self.number_yes + self.number_no)
+            select_split_randint = random.random()
+            if select_split_randint < select_split:
+                select_data = random.sample(range(0, self.number_yes), 1)[0]
+                select_bank_data_id.add(select_data)
+                for j in index:
+                    select_bank_data[i].append(self.bank_list_buffer[select_data][j])
+                select_bank_data[i].append(self.bank_list_buffer[select_data][19])
+            else:
+                select_data = random.sample(range(self.number_yes, self.number_yes + self.number_no), 1)[0]
+                select_bank_data_id.add(select_data)
+                for j in index:
+                    select_bank_data[i].append(self.bank_list_buffer[select_data][j])
+                select_bank_data[i].append(self.bank_list_buffer[select_data][19])
+        
+        return select_bank_data, select_bank_data_id , index
+
+    def get_unknown_label(self):
+        return self.unknown_label
+
     def get_bank_list(self):
-        return self.bank_list
+        return self.bank_list_buffer
 
 class data_select:
     def __init__(self,\
                  bank_list):
         super(data_select, self).__init__()
 
-
-data = pd.read_csv("bank-additional-full.csv")
-bank_list = data.values.tolist()
-data_processor = data_process(bank_list=bank_list)
-bank_list = data_processor.get_bank_list()
+if __name__ == '__main__':
+    data = pd.read_csv("bank-additional-full.csv")
+    bank_list = data.values.tolist()
+    data_processor = data_process(bank_list=bank_list)
+    bank_list = data_processor.get_bank_list()
+    select_data, select_data_id, select_feature_id = data_processor.select(2000, 5)
