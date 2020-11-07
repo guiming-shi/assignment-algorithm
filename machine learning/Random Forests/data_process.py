@@ -166,7 +166,8 @@ class data_process:
         for i in range(select_number):
             select_split = self.number_yes / (self.number_yes + self.number_no)
             select_split_randint = random.random()
-            if select_split_randint < select_split:
+            #if select_split_randint > select_split:
+            if select_split_randint > 0.5:   
                 select_data = random.sample(range(0, self.number_yes), 1)[0]
                 select_bank_data_id.add(select_data)
                 for j in index:
