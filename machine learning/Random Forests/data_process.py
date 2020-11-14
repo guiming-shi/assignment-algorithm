@@ -83,6 +83,8 @@ class data_process:
         self.del_Duration()
         # sort the data according the output type
         self.class_sort()
+        self.change_idx = [] 
+        self.testVec = []
         
     def embedding(self):
         for i in range(len(self.bank_list)):
@@ -179,8 +181,17 @@ class data_process:
                 for j in index:
                     select_bank_data[i].append(self.bank_list_buffer[select_data][j])
                 select_bank_data[i].append(self.bank_list_buffer[select_data][19])
+
+        index.append(-1)
+
+        test_data = []
+        test_data_idx = []
+        for i in range(len(self.bank_list)):
+            if i not in select_bank_data_id:
+                test_data.append([self.bank_list[i][k] for k in index])
+                test_data_idx.append(i)
         
-        return select_bank_data, select_bank_data_id , index
+        return select_bank_data, select_bank_data_id , index[:-1] , test_data, test_data_idx
 
     def get_unknown_label(self):
         return self.unknown_label
@@ -193,9 +204,10 @@ class data_select:
                  bank_list):
         super(data_select, self).__init__()
 
+
 if __name__ == '__main__':
     data = pd.read_csv("bank-additional-full.csv")
     bank_list = data.values.tolist()
     data_processor = data_process(bank_list=bank_list)
     bank_list = data_processor.get_bank_list()
-    select_data, select_data_id, select_feature_id = data_processor.select(2000, 5)
+    select_data, select_data_id, select_feature_id, test_data = data_processor.select(2000, 5)
