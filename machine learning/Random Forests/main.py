@@ -9,6 +9,7 @@ import process as ps
 
 train_number = 10000
 train_feature_number = 2
+tree_number = 10
 
 def cal_precision(testVec, label):
     precision = 0
@@ -21,10 +22,11 @@ def cal_precision(testVec, label):
     return precision
 
 if __name__ == '__main__':
-#----------------------得到训练样本和测试样本
+#----------------------load数据和进行处理
     data = pd.read_csv("bank-additional-full.csv")
     bank_list = data.values.tolist()
     data_processor = process.data_process(bank_list=bank_list)
+#----------------------得到训练样本和测试样本
     data = data_processor.select(train_number, train_feature_number)
 #----------------------生成决策树
     model = dt.decision_tree(select_data = data)
@@ -44,6 +46,27 @@ if __name__ == '__main__':
 
     precision = cal_precision(testVec, label)
     print('precision: ', precision)
+#----------------------随机森林
+    forest_data = [list] * tree_number 
+    forest_tree = [list] * tree_number
+    forest_featLabels = [list] * tree_number
+    tree_model = [list] * tree_number
+    for forest_idx in range(tree_number):
+        tree_model.append(dt.decision_tree(select_data = forest_data[forest_idx]))
+        forest_data.append(data_processor.select(train_number, train_feature_number))
+        forest_tree.append(model.createTree(dataSet = model.select_data[0], labels = model.label(model.select_data[2], model.feature_list), featLabels = forest_featLabels[forest_idx]))
+        forest_featLabels.append(forest_featLabels[forest_idx][:train_feature_number])
+        
+
+    # for forest_idx in range(tree_number):
+    #     model = dt.decision_tree(select_data = forest_data[forest_idx])
+    #     forest_data[forest_idx] = data_processor.select(train_number, train_feature_number)
+    #     forest_tree[forest_idx] = model.createTree(dataSet = model.select_data[0], labels = model.label(model.select_data[2], model.feature_list), featLabels = forest_featLabels[forest_idx])
+    #     forest_featLabels[forest_idx] = forest_featLabels[forest_idx][:train_feature_number]
+
+
+
+
 
 
 
