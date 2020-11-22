@@ -23,7 +23,7 @@ def cal_precision(testVec, label):
 
 if __name__ == '__main__':
 #----------------------load数据和进行处理
-    data = pd.read_csv("bank-additional-full.csv")
+    data = pd.read_csv("bank-additional-full-train.csv")
     bank_list = data.values.tolist()
     data_processor = process.data_process(bank_list=bank_list)
 #----------------------得到训练样本和测试样本
@@ -46,23 +46,24 @@ if __name__ == '__main__':
 
     precision = cal_precision(testVec, label)
     print('precision: ', precision)
-#----------------------随机森林
-    forest_data = [list] * tree_number 
-    forest_tree = [list] * tree_number
-    forest_featLabels = [list] * tree_number
-    tree_model = [list] * tree_number
-    for forest_idx in range(tree_number):
-        tree_model.append(dt.decision_tree(select_data = forest_data[forest_idx]))
-        forest_data.append(data_processor.select(train_number, train_feature_number))
-        forest_tree.append(model.createTree(dataSet = model.select_data[0], labels = model.label(model.select_data[2], model.feature_list), featLabels = forest_featLabels[forest_idx]))
-        forest_featLabels.append(forest_featLabels[forest_idx][:train_feature_number])
+#----------------------测试集数据
+    data_test = pd.read_csv("bank-additional-full-test.csv")
+    bank_list_test = data_test.values.tolist()
+    data_processor_test = process.data_process(bank_list=bank_list_test)
+    data_test = data_processor_test.get_test(data[2])
+#----------------------测试测试集决策树效果
+    testVec = data_test[:-1]
+    label = [data_test[i][-1] for i in range(len(data_test))]
+    
+    change_idx = []
+    change_idx = ps.change_idx(featLabels)
+
+    change_idx, testVec = ps.BubbleSort(change_idx, testVec)
+
+    precision = cal_precision(testVec, label)
+    print('precision: ', precision)
         
 
-    # for forest_idx in range(tree_number):
-    #     model = dt.decision_tree(select_data = forest_data[forest_idx])
-    #     forest_data[forest_idx] = data_processor.select(train_number, train_feature_number)
-    #     forest_tree[forest_idx] = model.createTree(dataSet = model.select_data[0], labels = model.label(model.select_data[2], model.feature_list), featLabels = forest_featLabels[forest_idx])
-    #     forest_featLabels[forest_idx] = forest_featLabels[forest_idx][:train_feature_number]
 
 
 

@@ -193,6 +193,21 @@ class data_process:
         
         return select_bank_data, select_bank_data_id , index[:-1] , test_data, test_data_idx
 
+    def get_test_data(self, feature_idx):
+        train_data = []
+        for i in range(len(self.bank_list)):
+            train_data.append([self.bank_list[i][k] for k in feature_idx])
+        label = []
+        for i in range(len(self.bank_list)):
+            label.append(self.bank_list[i][-1])
+        return train_data
+
+    def get_test_label(self):
+        label = []
+        for i in range(len(self.bank_list)):
+            label.append(self.bank_list[i][-1])
+        return label
+
     def get_unknown_label(self):
         return self.unknown_label
 
